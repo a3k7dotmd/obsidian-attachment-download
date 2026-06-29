@@ -469,7 +469,7 @@ export default class LocalImagesPlugin extends Plugin {
   // attachFormat. Legacy keys are read via cast (they persist through the settings merge).
   async migrateMediaSettings() {
     const from = this.settings.mediaSettingsVersion
-    if (from >= 3) { return }
+    if (from >= 4) { return }
     const legacy = this.settings as any
     if (from < 2) {
       // v1 -> v2: legacy mediaRootDir / useMD5ForNewWebAtt -> {root}/{path}/{format} model.
@@ -495,7 +495,12 @@ export default class LocalImagesPlugin extends Plugin {
       // v2 -> v3: pathInTags removed — link format now always follows Obsidian's "New link format".
       delete legacy.pathInTags
     }
-    this.settings.mediaSettingsVersion = 3
+    if (from < 4) {
+      // v3 -> v4: ExcludedFoldersListRegexp dropped — ThePathExcluded now matches against
+      // ExcludedFoldersList + excludeSubpaths directly at runtime (no precomputed regex).
+      delete legacy.ExcludedFoldersListRegexp
+    }
+    this.settings.mediaSettingsVersion = 4
     await this.saveData(this.settings)
   }
 
