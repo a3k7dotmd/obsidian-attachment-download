@@ -1,0 +1,47 @@
+name: Release
+
+# Useful if you fork this repo: push a version tag and a draft GitHub release
+# is built and published with the files Obsidian needs.
+#
+#   # set the version in manifest.json / package.json / versions.json first, then:
+#   git tag 1.2.3
+#   git push origin 1.2.3
+#
+# It runs ONLY on version tags (never on every push), and has the contents:write
+# permission required to create a release. Review the draft and hit publish.
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+
+      - name: Install and build
+        run: |
+          npm install
+          npm run build
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --draft \
+            --generate-notes \
+            "obsidian_local_images_plus_latest/main.js" \
+            manifest.json \
+            styles.css
