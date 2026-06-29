@@ -1,7 +1,7 @@
 {
   "id": "obsidian-attachment-download",
   "name": "Attachment Download",
-  "version": "0.18.6",
+  "version": "0.18.7",
   "minAppVersion": "1.0.3",
   "description": "Downloads external media (web, data:, file://) referenced in your notes into the vault and rewrites the links to point at the local copies. Attachment path/format settings mirror obsidian-attachment-management.",
   "author": "catalysm, aleksey-rezvov, Sergei Korneev, a3k7dotmd",
