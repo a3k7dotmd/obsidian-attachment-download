@@ -2,7 +2,7 @@
 
 An [Obsidian](https://obsidian.md) plugin that **automates downloading external attachments** referenced in your notes into the vault and rewrites the links to point at the local copies. That is *all* it does — organizing, renaming and cleaning up attachments is intentionally left to Obsidian itself and to [obsidian-attachment-management](https://github.com/trganda/obsidian-attachment-management).
 
-It is a heavily reduced and rebranded fork of [Local Images Plus](https://github.com/Sergei-Korneev/obsidian-local-images-plus).
+It is a heavily reduced and rebranded fork of [Local Images Plus](https://github.com/Sergei-Korneev/obsidian-local-images-plus). Its attachment **folder and file-naming** behaviour is mirrored from [obsidian-attachment-management](https://github.com/trganda/obsidian-attachment-management), to make setup straightforward and to hand the downloaded files off to the attachment-management plugin cleanly.
 
 ## What it does
 

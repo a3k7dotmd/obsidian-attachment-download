@@ -1,4 +1,4 @@
-export const APP_TITLE = "Attachment Download  0.18.5";
+export const APP_TITLE = "Attachment Download  0.18.6";
 
 
 
@@ -89,7 +89,7 @@ export interface ISettings {
 
 export const DEFAULT_SETTINGS: ISettings = {
   processCreated: true,
-  ignoredExt: "cnt|php|htm|html",
+  ignoredExt: "cnt|php|html?",
   useCaptions: true,
   downUnknown: false,
   saveAttE: "obsFolder",
