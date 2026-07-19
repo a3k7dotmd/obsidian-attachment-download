@@ -14,7 +14,8 @@ import {
   NOTICE_TIMEOUT,
   APP_TITLE,
   VERBOSE,
-  ATT_SIZE_ACHOR
+  ATT_SIZE_ACHOR,
+  CLICKABLE_IMAGE_PATTERN
 } from "./config";
 
 import {
@@ -191,6 +192,21 @@ export function isUrl(link: string) {
   } catch (_) {
     return false;
   }
+}
+
+
+// Collapse a clipped "clickable image" — an image embed wrapped in a link to the SAME
+// url, [![alt](url)](url "title") — into a single embed, ![alt](url "title"). The url is
+// then downloaded once; without this the wrapper link would survive the first pass with
+// its web url and a later pass would re-match it across the localized embed and garble
+// the tag. Pairs with different urls (e.g. thumbnail linking to a page) are left alone.
+export function collapseSelfLinkedImages(content: string): string {
+  return content.replace(CLICKABLE_IMAGE_PATTERN, (match, alt, innerUrl, outerUrl, title) => {
+    if (innerUrl !== outerUrl || !isUrl(innerUrl)) {
+      return match;
+    }
+    return `![${alt}](${innerUrl}${title})`;
+  });
 }
 
 
