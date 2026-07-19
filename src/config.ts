@@ -1,4 +1,4 @@
-export const APP_TITLE = "Attachment Download  0.18.7";
+export const APP_TITLE = "Attachment Download  0.18.8";
 
 
 
@@ -35,9 +35,17 @@ export const MD_SEARCH_PATTERN =
 /\!\[(?<anchor>([^\]]*))\]\((?<link>((http(s){0,1}).+?(\) |\..{3,4}\)|\)$|\)\n|\)\]|\)\[)))/gm,
 
 //Base64 encoded data
-/\!\[[^\[](?<anchor>(.{0}|[^\[]+?))\]\((?<link>((data\:.+?base64\,).+?(\) |\..{3,4}\)|\)$|\)\n|\)\]|\)\[)))/gm,
-/\!\[(?<anchor>(.{0}|[^\[]+?))\]\((?<link>((http(s){0,1}|(data\:.+?base64\,)).+?\)))/gm
+// NOTE: anchors exclude "]" so a match can never bleed across an already-localized
+// embed into a following "](...)" wrapper link and garble the tag.
+/\!\[[^\[\]](?<anchor>(.{0}|[^\[\]]+?))\]\((?<link>((data\:.+?base64\,).+?(\) |\..{3,4}\)|\)$|\)\n|\)\]|\)\[)))/gm,
+/\!\[(?<anchor>(.{0}|[^\[\]]+?))\]\((?<link>((http(s){0,1}|(data\:.+?base64\,)).+?\)))/gm
 ]
+
+// A clipped "clickable image": an image embed wrapped in a link to the SAME url,
+// [![alt](url)](url "title"). Collapsed to a single embed before processing
+// (collapseSelfLinkedImages) so the url is downloaded once and no wrapper web-link
+// is left behind for a later pass to garble.
+export const CLICKABLE_IMAGE_PATTERN = /\[!\[([^\]]*)\]\(([^()\s]+)(?:\s+"[^"]*")?\)\]\(([^()\s]+)((?:\s+"[^"]*")?)\)/g
 
 
 export const FRONTMATTER_SEARCH_PATTERN =

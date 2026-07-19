@@ -22,6 +22,7 @@ import {
   displayError,
   encObsURI,
   pathJoin,
+  collapseSelfLinkedImages,
 } from "./utils"
 
 import {
@@ -171,10 +172,14 @@ export default class LocalImagesPlugin extends Plugin {
 
     const content = await this.app.vault.cachedRead(file)
     if (content.length == 0) {return null}
-      
+
+    // Collapse clipped "clickable images" ([![alt](url)](same-url "title")) into single
+    // embeds first, so each url is downloaded once and no wrapper web-link is left
+    // behind for a later pass to garble.
+    const prepared = collapseSelfLinkedImages(content)
 
     const fixedContent = await replaceAsync(
-      content,
+      prepared,
       MD_SEARCH_PATTERN,
       imageTagProcessor(this,
         file,
