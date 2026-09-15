@@ -53,8 +53,15 @@ export default class LocalImagesPlugin extends Plugin {
   // "create" event a CIFS/network-mount watcher fires for our own vault.modify(), which would
   // otherwise reprocess the note forever.
   justModifiedByPlugin = new Map<string, number>()
+  // Set by onunload(); stops the deferred layout-ready hook-up from registering on a dead component.
+  unloaded = false
+  // Bumped by every onload(); a layout-ready callback queued by an earlier load of the same
+  // instance (unload()+load() without a new instance) sees a different value and does nothing.
+  loadGeneration = 0
   async onload() {
 
+    this.unloaded = false
+    this.loadGeneration++
     await this.loadSettings()
 
     this.addCommand({
@@ -104,15 +111,47 @@ export default class LocalImagesPlugin extends Plugin {
 
     // Auto-process a SINGLE note when it is created (brought in by a clipper, sync, another program
     // or an LLM) or when you open it — never the whole vault (that's the command's job), and never
-    // background files: ExemplaryOfMD now matches only real ".md"/".canvas" files (not e.g. Obsidian's
+    // background files: ExemplaryOfMD matches only real ".md"/".canvas" files (not e.g. Obsidian's
     // "obsidian.md-<ts>.log" console logs), and maybeProcessNote ignores notes the plugin itself just
     // wrote and notes that have no external link to localize.
-    this.registerEvent(this.app.vault.on('create', (file: TFile) => {
-      this.maybeProcessNote(file)
-    }))
-    this.registerEvent(this.app.workspace.on('file-open', (file: TFile) => {
-      this.maybeProcessNote(file)
-    }))
+    //
+    // Both hooks are armed only once the workspace layout is ready, so that opening the vault never
+    // touches a note:
+    //  - Obsidian fires vault 'create' once for EVERY existing file while it indexes the vault at
+    //    startup (API doc: "This is also called when the vault is first loaded for each existing
+    //    file. If you do not wish to receive create events on vault load, register your event
+    //    handler inside Workspace.onLayoutReady"). Registered directly in onload() (v0.18.8 and
+    //    earlier), that storm made maybeProcessNote cachedRead every .md note in the vault (~470
+    //    reads over a CIFS mount) while Obsidian was still starting: ~8 s added to startup.
+    //  - Obsidian's normal 'file-open' emitter (Workspace.activeLeafEvents, 1.13.7) only fires once
+    //    layoutReady is true, and right after the flip it fires at most ONE deferred event: for the
+    //    tab restored as active from workspace.json (none when no file is active). Whether that
+    //    event lands before or after this deferred registration is a race between two 0 ms timers,
+    //    so the handler remembers the file that is active when this callback runs and ignores the
+    //    first 'file-open' if it is for that file.
+    //    Accepted edge cases (one skipped auto-process, never a startup read): a note the user
+    //    manages to open before this callback runs is treated as the restored tab and skipped once;
+    //    so is a keyboard re-open of the already active note from the file explorer as the very
+    //    first action (the one emitter that fires for an unchanged active file). Re-open the note
+    //    or run the command.
+    const loadGen = this.loadGeneration
+    this.app.workspace.onLayoutReady(() => {
+      // Never register on a dead or since-reloaded component: Component.register only queues the
+      // offref, and an unload() that already ran will not run it again.
+      if (this.unloaded || loadGen !== this.loadGeneration) { return }
+      let restoredActive: string | null = this.app.workspace.getActiveFile()?.path ?? null
+      this.registerEvent(this.app.vault.on('create', (file: TFile) => {
+        this.maybeProcessNote(file)
+      }))
+      this.registerEvent(this.app.workspace.on('file-open', (file: TFile) => {
+        if (restoredActive !== null) {
+          const isRestoreEvent = file?.path === restoredActive
+          restoredActive = null
+          if (isRestoreEvent) { return }
+        }
+        this.maybeProcessNote(file)
+      }))
+    })
 
 
     this.registerEvent(this.app.workspace.on(
@@ -455,6 +494,7 @@ export default class LocalImagesPlugin extends Plugin {
 
 
   async onunload() {
+    this.unloaded = true
     this.app.workspace.off("editor-drop", null)
     this.app.workspace.off("editor-paste", null)
     this.app.workspace.off('file-menu', null)
