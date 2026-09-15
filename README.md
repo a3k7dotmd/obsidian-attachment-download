@@ -44,6 +44,7 @@ Other settings of note:
 - **Exclude extension pattern** — a regex of file extensions never to download, matching attachment-management's `excludeExtensionPattern` (e.g. `pdf|docx?|zip`).
 - **Excluded paths** / **Exclude subpaths** — semicolon-separated folder paths to skip (copy-paste compatible with attachment-management), with optional recursion into subfolders.
 - Plus: compress downloaded PNGs (to JPEG/WebP), download retries, a file-size floor, and an *Automatically process opened notes* toggle.
+- *Automatically process opened notes* only ever looks at the single note you open or that gets created **after** Obsidian's layout is ready. It never scans the vault at startup (0.18.9 fixed an 8 s startup penalty caused by hooking the vault `create` event too early: Obsidian fires it once per existing file while indexing the vault).
 
 ## Commands
 
