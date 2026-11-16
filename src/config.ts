@@ -1,4 +1,4 @@
-export const APP_TITLE = "Attachment Download  0.18.9";
+export const APP_TITLE = "Attachment Download  0.18.10";
 
 
 

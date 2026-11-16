@@ -62,6 +62,15 @@ export default class LocalImagesPlugin extends Plugin {
 
     this.unloaded = false
     this.loadGeneration++
+    // One cleanup for the queue interval, whatever its id is at unload time. setupQueueInterval()
+    // runs for every queued note; registering each new id with registerInterval() (v0.18.9 and
+    // earlier) left one more cleanup callback in the plugin per queued note.
+    this.register(() => {
+      if (this.intervalId) {
+        window.clearInterval(this.intervalId)
+        this.intervalId = 0
+      }
+    })
     await this.loadSettings()
 
     this.addCommand({
@@ -186,7 +195,6 @@ export default class LocalImagesPlugin extends Plugin {
         this.processModifiedQueue,
         this.settings.realTimeUpdateInterval * 1000
       )
-      this.registerInterval(this.intervalId)
     }
   }
 
@@ -495,10 +503,10 @@ export default class LocalImagesPlugin extends Plugin {
 
   async onunload() {
     this.unloaded = true
-    this.app.workspace.off("editor-drop", null)
-    this.app.workspace.off("editor-paste", null)
-    this.app.workspace.off('file-menu', null)
-    //this.app.vault.off("create",  null)
+    // Nothing to remove by hand: every hook is registered with registerEvent()/register(), which
+    // Obsidian undoes on unload. Never call workspace.off(name, null) here: with a null callback
+    // Events.off deletes the handlers of EVERY plugin for that event (v0.18.9 and earlier did this
+    // for 'editor-drop', 'editor-paste' and 'file-menu').
     logError(" unloaded.")
   }
 

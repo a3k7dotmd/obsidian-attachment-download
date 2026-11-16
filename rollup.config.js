@@ -19,7 +19,8 @@ export default {
   input: "src/main.ts",
   output: {
     dir: "obsidian_local_images_plus_latest",
-    sourcemap: "inline",
+    // Development builds only: the inline source map was 897 KB of the 1.6 MB production main.js.
+    sourcemap: isProd ? false : "inline",
     sourcemapExcludeSources: isProd,
     format: "cjs",
     exports: "default",
